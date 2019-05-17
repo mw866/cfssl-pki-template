@@ -1,6 +1,6 @@
 # CFSSL PKI Template
 
-The template that uses [CFSSL](https://github.com/cloudflare/cfssl) generates client certificates and CRL from a private PKI.
+The template uses [CFSSL](https://github.com/cloudflare/cfssl) to generates client certificates and CRL from a private PKI.
 
 ## Overview
 
@@ -43,18 +43,35 @@ cfssl gencert -ca=./ca/ca.pem -ca-key=./ca/ca-key.pem -config=ca-config.json -pr
 ```
 
 
-### Validate the Client Cerficates
+### Validate the Client Cerficates locally
 
-Without client certificate: 
+Set
+
+
+#### Server-side: Set up a test server
+```
+openssl s_server -CAfile ca/ca-key.pem  -cert server/server.pem -key server/server-key.pem -accept 4433 -www -debug -Verify 10
+```
+
+#### Client-side: Without client certificate: 
+
 
 ```
-curl -svo /dev/null  https://mtls.chriswang.me
+openssl s_client -connect localhost:4433 -servername mtls.chriswang.me  -CAfile ca/ca.pem 
 ```
 
-With client certificate: 
+No error is expected in the output from the server side 
+
+
+#### Client-side: With client certificate: 
 
 ```
-/usr/local/opt/curl-openssl/bin/curl  -svo /dwev/null https://mtls.chriswang.me --cert ./client/client-1.pem --key ./client/client-1-key.pem
+openssl s_client -connect localhost:4433 -servername mtls.chriswang.me -cert ./client/client-1.pem -key ./client/client-1-key.pem  -CAfile ca/ca.pem
+```
+
+Some error message is expected similar to the following
+```
+4502087276:error:140890C7:SSL routines:ssl3_get_client_certificate:peer did not return a certificate:s3_srvr.c:3346:
 ```
 
 ### Generate CRL
